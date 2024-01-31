@@ -26,7 +26,7 @@ SG_ALB_ID=$(aws ec2 describe-security-groups --group-names SG-ALB --query 'Secur
 
 #Reglas SG-Linux
 aws ec2 authorize-security-group-ingress --group-name SG-Linux --protocol tcp --port 22 --cidr 0.0.0.0/0
-aws ec2 authorize-security-group-ingress --group-name SG-Linux --protocol tcp --port 80 --cidr 0.0.0.0/0
+#aws ec2 authorize-security-group-ingress --group-name SG-Linux --protocol tcp --port 80 --cidr 0.0.0.0/0
 aws ec2 authorize-security-group-ingress --group-name SG-Linux --protocol tcp --port 80 --source-group $SG_ALB_ID
 aws ec2 authorize-security-group-ingress --group-name SG-Linux --protocol tcp --port 2049 --source-group $SG_EFS_ID
 
@@ -71,7 +71,7 @@ aws efs create-file-system \
     --performance-mode generalPurpose \
     --throughput-mode bursting \
     --encrypted \
-    --region us-east-1 \
+    --region us-east-1
 
 FILE_SYSTEM_ID=$(aws efs describe-file-systems --query "FileSystems[?Name=='webserver_EFS'].FileSystemId" --output text)
 
@@ -102,8 +102,8 @@ sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,ret
 sudo wget -nc https://tay5111.s3.amazonaws.com/index.php -P /var/www/html/
 EOF
 
-#AMI_ID=$(aws ec2 describe-images --owners amazon --filters "Name=imageid,Values=ami-0a3c3a20c09d6f377" --query "Images[0].ImageId" --region $AWS_REGION --output text)
-AMI_ID="ami-0a3c3a20c09d6f377"
+AMI_ID=$(aws ec2 describe-images --owners amazon --filters "Name=name,Values=al2023-ami-2*-kernel-6.1-x86_64" --query "Images[0].ImageId" --output text --region $AWS_REGION)
+#AMI_ID="ami-0a3c3a20c09d6f377"
 
 # Obtener el ID de la subred en la zona de disponibilidad "us-east-1a"
 SUBNET_ID_A=$(aws ec2 describe-subnets --filters "Name=availability-zone,Values=us-east-1a" --query "Subnets[0].SubnetId" --output text)
@@ -111,7 +111,7 @@ SUBNET_ID_A=$(aws ec2 describe-subnets --filters "Name=availability-zone,Values=
 # Obtener el ID de la subred en la zona de disponibilidad "us-east-1b"
 SUBNET_ID_B=$(aws ec2 describe-subnets --filters "Name=availability-zone,Values=us-east-1b" --query "Subnets[0].SubnetId" --output text)
 
-# Obtener el ID de la subred en la zona de disponibilidad "us-east-1c"
+# Obtener el ID de la subred en la zona de disponibilidad "us-east-1c"aws ec2 describe-images --owners self amazon
 SUBNET_ID_C=$(aws ec2 describe-subnets --filters "Name=availability-zone,Values=us-east-1c" --query "Subnets[0].SubnetId" --output text)
 
 # Crear un array con los IDs de las subredes en cada zona de disponibilidad
