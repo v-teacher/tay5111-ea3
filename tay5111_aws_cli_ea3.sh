@@ -133,8 +133,26 @@ for SUBNET_ID in "${SUBNET_IDS[@]}"; do
         --output text \
         --region $AWS_REGION)
     ((i++))
+    export INSTANCE_ID$(echo $i)="$INSTANCE_ID"
 done
+
+sleep 90
 
 # ALB
 
+SERVICE_NAME="webserver-http"
+SERVICE_PORT=80
 
+ALB_NAME="webserver-alb"
+TARGET_GROUP_NAME="${SERVICE_NAME}-tg"
+
+ALB_ARN=$(aws elbv2 create-load-balancer --name $ALB_NAME --subnets $SUBNET_ID_A $SUBNET_ID_B $SUBNET_ID_C --security-groups $SG_ALB_ID --query "LoadBalancers[0].LoadBalancerArn" --output text --region $AWS_REGION)
+
+TARGET_GROUP_ARN=$(aws elbv2 create-target-group --name $TARGET_GROUP_NAME --protocol HTTP --port $SERVICE_PORT --target-type instance --vpc-id $VPC_ID --query "TargetGroups[0].TargetGroupArn" --output text --region $AWS_REGION)
+
+aws elbv2 register-targets --target-group-arn $TARGET_GROUP_ARN --targets Id=$INSTANCE_ID1 Id=$INSTANCE_ID2 Id=$INSTANCE_ID3 --region  $AWS_REGION
+
+aws elbv2 create-listener --load-balancer-arn $ALB_ARN --protocol HTTP --port 80 --default-actions Type=forward,TargetGroupArn=$TARGET_GROUP_ARN --region $AWS_REGION
+
+ALB_DNS_NAME=$(aws elbv2 describe-load-balancers --names $ALB_NAME --query "LoadBalancers[0].DNSName" --output text --region $AWS_REGION)
+echo "DNS name del ALB: $ALB_DNS_NAME"
